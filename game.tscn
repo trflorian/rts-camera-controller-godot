@@ -1,0 +1,168 @@
+[gd_scene load_steps=15 format=3 uid="uid://bulluso86sf08"]
+
+[ext_resource type="Script" path="res://camera/RtsCameraController.gd" id="1_k3lsi"]
+[ext_resource type="Script" path="res://selection/SelectionManager.gd" id="2_ioibh"]
+[ext_resource type="PackedScene" uid="uid://d0yn5v2nc8y0t" path="res://units/unit_base.tscn" id="4_dvawi"]
+[ext_resource type="Script" path="res://selection/SelectionBox.gd" id="4_nxl37"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_xui6s"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_00wev"]
+sky_material = SubResource("ProceduralSkyMaterial_xui6s")
+
+[sub_resource type="Environment" id="Environment_652ie"]
+background_mode = 2
+sky = SubResource("Sky_00wev")
+tonemap_mode = 2
+
+[sub_resource type="GDScript" id="GDScript_6oky8"]
+script/source = "extends Node
+
+@onready var camera_controller: RtsCameraController = get_tree().get_first_node_in_group('camera_controller')
+
+var selected_units: Array[Unit] = []
+
+func _ready() -> void:
+	SelectionEvents.on_selection_changed.connect(_on_selection_changed)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(\"unit_command\"):
+		_on_command_selected_units()
+
+func _on_selection_changed(new_selection: Array[Unit]):
+	selected_units = new_selection
+
+func _on_command_selected_units() -> void:
+	if selected_units.is_empty():
+		return
+	
+	var target_intersection = camera_controller.raycast_from_camera()
+	if target_intersection.is_empty():
+		print(\"No target found to command units\")
+		return
+	
+	_on_handle_units_command(selected_units, target_intersection.collider, 
+		target_intersection.position)
+		
+func _on_handle_units_command(units: Array[Unit], target_obj: Node3D, target_pos: Vector3) -> void:
+	if target_obj.is_in_group(\"terrain\"):
+		_handle_move_command(units, target_pos)
+	elif target_obj.is_in_group(\"units\"):
+		_handle_attack_command(units, target_obj)
+		
+func _handle_move_command(units: Array[Unit], target_pos: Vector3) -> void:
+	var cmd = UnitCommand.new(UnitCommand.Type.MOVE, target_pos, null)
+	for unit in units:
+		unit.set_command(cmd)
+	UnitEvents.on_command_units.emit(units, cmd)
+
+func _handle_attack_command(units: Array[Unit], target_obj: Node3D) -> void:
+	var cmd = UnitCommand.new(UnitCommand.Type.ATTACK, target_obj.global_position, target_obj)
+	for unit in units:
+		unit.set_command(cmd)
+	UnitEvents.on_command_units.emit(units, cmd)
+"
+
+[sub_resource type="LabelSettings" id="LabelSettings_w83j2"]
+font_size = 30
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cnayh"]
+bg_color = Color(0.113725, 0.113725, 0.113725, 0.552941)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_88rop"]
+vertices = PackedVector3Array(-19.5, 0.5, 9.75, -19.5, 0.5, 19.5, -9.75, 0.5, 19.5, 9.75, 0.5, 19.5, 19.5, 0.5, 19.5, 19.5, 0.5, 9.75, 19.5, 0.5, -9.75, 19.5, 0.5, -19.5, 9.75, 0.5, -19.5, -9.75, 0.5, -19.5, -19.5, 0.5, -19.5, -19.5, 0.5, -9.75, -19.5, 0.5, 0, -19.5, 0.5, 9.75, -9.75, 0.5, 19.5, 0, 0.5, 19.5, 9.75, 0.5, 19.5, 19.5, 0.5, 9.75, 19.5, 0.5, 0, 19.5, 0.5, -9.75, 9.75, 0.5, -19.5, 0, 0.5, -19.5, 0, 0.5, -19.5, -9.75, 0.5, -19.5, -19.5, 0.5, -9.75, -19.5, 0.5, 0, 19.5, 0.5, 0, 0, 0.5, -19.5, -19.5, 0.5, 0, -9.75, 0.5, 19.5, 0, 0.5, 19.5, 19.5, 0.5, 9.75)
+polygons = [PackedInt32Array(2, 1, 0), PackedInt32Array(5, 4, 3), PackedInt32Array(8, 7, 6), PackedInt32Array(11, 10, 9), PackedInt32Array(14, 13, 12), PackedInt32Array(17, 16, 15), PackedInt32Array(19, 18, 20), PackedInt32Array(20, 18, 21), PackedInt32Array(23, 22, 24), PackedInt32Array(24, 22, 25), PackedInt32Array(31, 30, 26), PackedInt32Array(26, 30, 29), PackedInt32Array(26, 29, 28), PackedInt32Array(26, 28, 27)]
+agent_height = 2.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j7kvd"]
+albedo_color = Color(0.584314, 0.780392, 0.372549, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_8xy4t"]
+material = SubResource("StandardMaterial3D_j7kvd")
+size = Vector2(40, 40)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hma8i"]
+size = Vector3(40, 0.2, 40)
+
+[node name="World" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_652ie")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, 0.75, -0.433013, 0, 0, 0)
+shadow_enabled = true
+
+[node name="RtsCameraController" type="Node3D" parent="." groups=["camera_controller"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.298932, 0, -0.128522)
+script = ExtResource("1_k3lsi")
+
+[node name="Elevation" type="Node3D" parent="RtsCameraController"]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0)
+
+[node name="MainCamera" type="Camera3D" parent="RtsCameraController/Elevation"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.23517e-08, 7.75967)
+
+[node name="SelectionManager" type="Node" parent="."]
+script = ExtResource("2_ioibh")
+
+[node name="UnitCommander" type="Node" parent="."]
+script = SubResource("GDScript_6oky8")
+
+[node name="CanvasGroup" type="CanvasGroup" parent="."]
+
+[node name="PanelContainer" type="PanelContainer" parent="CanvasGroup"]
+offset_right = 601.0
+offset_bottom = 280.0
+
+[node name="Label" type="Label" parent="CanvasGroup/PanelContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Move Camera with WASD / Arrow Keys
+Rotate Camera with Q/E
+Zoom Camera with Mouse Wheel
+Select Units with LMB
+Select multiple Units with SHIFT
+Command Units with RMB"
+label_settings = SubResource("LabelSettings_w83j2")
+
+[node name="SelectionBox" type="Panel" parent="."]
+offset_left = 659.0
+offset_top = 517.0
+offset_right = 991.67
+offset_bottom = 738.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_cnayh")
+script = ExtResource("4_nxl37")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_88rop")
+
+[node name="Ground" type="StaticBody3D" parent="NavigationRegion3D" groups=["terrain"]]
+
+[node name="GroundPlane" type="MeshInstance3D" parent="NavigationRegion3D/Ground"]
+mesh = SubResource("PlaneMesh_8xy4t")
+skeleton = NodePath("../../..")
+
+[node name="GroundCollisionBox" type="CollisionShape3D" parent="NavigationRegion3D/Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+shape = SubResource("BoxShape3D_hma8i")
+
+[node name="Unit" parent="." instance=ExtResource("4_dvawi")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.69752, 3.7998e-07, 0.00667143)
+
+[node name="Unit2" parent="." instance=ExtResource("4_dvawi")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.497954, -9.68575e-08, -2.87125)
+
+[node name="Unit3" parent="." instance=ExtResource("4_dvawi")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)

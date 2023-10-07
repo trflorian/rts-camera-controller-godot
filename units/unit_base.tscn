@@ -1,0 +1,39 @@
+[gd_scene load_steps=6 format=3 uid="uid://d0yn5v2nc8y0t"]
+
+[ext_resource type="Script" path="res://units/Unit.gd" id="1_0fwe6"]
+[ext_resource type="Script" path="res://selection/UnitSelectable.gd" id="2_wdd44"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dw2fp"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_i82ql"]
+material = SubResource("StandardMaterial3D_dw2fp")
+custom_aabb = AABB(0, 0, 0, 0, 1, 0)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_i66lx"]
+
+[node name="Unit" type="CharacterBody3D" groups=["units"]]
+script = ExtResource("1_0fwe6")
+speed = 5
+accel = 20
+
+[node name="UnitSelectable" type="Node3D" parent="."]
+script = ExtResource("2_wdd44")
+default_color = Color(1, 1, 1, 1)
+highlighted_color = Color(1, 1, 0.384314, 1)
+selected_color = Color(1, 0.541176, 0.32549, 1)
+
+[node name="CapsuleMesh" type="MeshInstance3D" parent="UnitSelectable"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("CapsuleMesh_i82ql")
+skeleton = NodePath("../../..")
+
+[node name="Collider" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_i66lx")
+
+[node name="NavAgent" type="NavigationAgent3D" parent="."]
+unique_name_in_owner = true
+path_height_offset = 0.5
+avoidance_enabled = true
+radius = 0.6
