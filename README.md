@@ -3,7 +3,7 @@ RTS style camera controller in godot with movement, rotation, zoom and unit sele
 
 Godot Engine v4.1.1
 
-## Itch.IO Web Export
+## Itch.io Web Export
 https://flipflogames.itch.io/rts-camera-controller-godot
 
 ## Screenshots
