@@ -13,10 +13,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action("unit_select"):
 		if event.is_pressed():
 			mouse_dragging = true
-			mouse_start_pos = event.global_position
+			mouse_start_pos = get_global_mouse_position()
 		elif event.is_released():
 			mouse_dragging = false
-			mouse_end_pos = event.global_position
+			mouse_end_pos = get_global_mouse_position()
 			select_units = true
 
 func _process(delta: float) -> void:
